@@ -780,12 +780,12 @@
 
 <script>
 // ─── SUPABASE ────────────────────────────────────────────────────────
-let supabase = null;
+let sb = null;
 let sbConnected = false;
 
 function initSupabase(url, key) {
   try {
-    supabase = window.supabase.createClient(url, key);
+    sb = window.supabase.createClient(url, key);
     sbConnected = true;
     localStorage.setItem('rx_sb_url', url);
     localStorage.setItem('rx_sb_key', key);
@@ -919,12 +919,12 @@ async function doLogin() {
   const pass = document.getElementById('login-pass').value;
   document.getElementById('auth-error').style.display = 'none';
 
-  if (supabase) {
+  if (sb) {
     const btn = document.getElementById('login-btn');
     btn.classList.add('auth-loading');
     btn.textContent = 'Signing in...';
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+      const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
       if (error) { setAuthError(error.message); btn.textContent = 'Sign In →'; btn.classList.remove('auth-loading'); return; }
       currentUser = { name: data.user.email.split('@')[0], email: data.user.email, id: data.user.id };
     } catch(e) {
@@ -947,12 +947,12 @@ async function doSignup() {
   const pass = document.getElementById('signup-pass').value;
   document.getElementById('auth-error').style.display = 'none';
 
-  if (supabase) {
+  if (sb) {
     const btn = document.getElementById('signup-btn');
     btn.classList.add('auth-loading');
     btn.textContent = 'Creating account...';
     try {
-      const { data, error } = await supabase.auth.signUp({ email, password: pass, options: { data: { business_name: biz } } });
+      const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { business_name: biz } } });
       if (error) { setAuthError(error.message); btn.textContent = 'Create Account →'; btn.classList.remove('auth-loading'); return; }
       showToast('Check your email to confirm your account', 'success');
       currentUser = { name: biz || email.split('@')[0], email, id: data.user?.id };
@@ -987,7 +987,7 @@ function enterApp() {
   const now = new Date();
   document.getElementById('dash-date').textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-  if (isDemo || !supabase) {
+  if (isDemo || !sb) {
     updateDbStatus(false);
   } else {
     updateDbStatus(true);
@@ -997,7 +997,7 @@ function enterApp() {
 }
 
 function logout() {
-  if (supabase) supabase.auth.signOut();
+  if (sb) sb.auth.signOut();
   currentUser = null; isDemo = false;
   document.getElementById('app').classList.remove('active');
   document.getElementById('landing').classList.add('active');
@@ -1066,8 +1066,8 @@ async function addProduct() {
 
   const item = { sku, name, category, stock, threshold, supplier };
 
-  if (supabase && currentUser?.id) {
-    const { error } = await supabase.from('products').insert([{ ...item, user_id: currentUser.id }]);
+  if (sb && currentUser?.id) {
+    const { error } = await sb.from('products').insert([{ ...item, user_id: currentUser.id }]);
     if (error) { showToast('DB error: ' + error.message, 'error'); return; }
   }
 
@@ -1084,8 +1084,8 @@ async function addProduct() {
 async function deleteProduct(sku) {
   if (!confirm('Remove ' + sku + ' from inventory?')) return;
 
-  if (supabase && currentUser?.id) {
-    await supabase.from('products').delete().eq('sku', sku).eq('user_id', currentUser.id);
+  if (sb && currentUser?.id) {
+    await sb.from('products').delete().eq('sku', sku).eq('user_id', currentUser.id);
   }
 
   inventoryData = inventoryData.filter(i => i.sku !== sku);
@@ -1095,8 +1095,8 @@ async function deleteProduct(sku) {
 }
 
 async function loadInventoryFromDB() {
-  if (!supabase || !currentUser?.id) return;
-  const { data, error } = await supabase.from('products').select('*').eq('user_id', currentUser.id);
+  if (!sb || !currentUser?.id) return;
+  const { data, error } = await sb.from('products').select('*').eq('user_id', currentUser.id);
   if (error) { showToast('Could not load inventory: ' + error.message, 'error'); return; }
   if (data && data.length > 0) {
     inventoryData = data.map(r => ({
@@ -1155,8 +1155,8 @@ async function addSupplier() {
 
   const supplier = { id: 'sup-' + Date.now(), name, category: cat, location: loc, lead: lead || '—', reliability: rel, products: 0 };
 
-  if (supabase && currentUser?.id) {
-    const { error } = await supabase.from('suppliers').insert([{
+  if (sb && currentUser?.id) {
+    const { error } = await sb.from('suppliers').insert([{
       name, category: cat, location: loc, lead_time: lead, reliability: rel, user_id: currentUser.id
     }]);
     if (error) { showToast('DB error: ' + error.message, 'error'); return; }
@@ -1172,8 +1172,8 @@ async function addSupplier() {
 }
 
 async function loadSuppliersFromDB() {
-  if (!supabase || !currentUser?.id) return;
-  const { data, error } = await supabase.from('suppliers').select('*').eq('user_id', currentUser.id);
+  if (!sb || !currentUser?.id) return;
+  const { data, error } = await sb.from('suppliers').select('*').eq('user_id', currentUser.id);
   if (error) return;
   if (data && data.length > 0) {
     supplierData = data.map(r => ({
