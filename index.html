@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restox — AI Inventory Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0a0a0a;--bg2:#111;--bg3:#161616;--bg4:#1c1c1c;
+    --accent:#c8ff00;--accent2:#a8d900;
+    --text:#f0f0f0;--text2:#999;--text3:#555;
+    --border:#222;--border2:#2a2a2a;
+    --red:#ff4444;--green:#44ff88;--amber:#ffcc00;
+  }
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+  h1,h2,h3,h4{font-family:'Syne',sans-serif}
+
+  /* NAV */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(10,10,10,0.9);backdrop-filter:blur(12px)}
+  .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-0.02em;color:var(--accent)}
+  .nav-links{display:flex;gap:2rem;align-items:center}
+  .nav-links a{color:var(--text2);text-decoration:none;font-size:0.85rem;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;transition:color 0.2s}
+  .nav-links a:hover{color:var(--text)}
+  .nav-cta{background:var(--accent);color:#000;border:none;padding:0.5rem 1.25rem;border-radius:4px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;transition:transform 0.15s,background 0.15s}
+  .nav-cta:hover{background:var(--accent2);transform:scale(1.02)}
+
+  /* PAGES */
+  .page{min-height:100vh;display:none}
+  .page.active{display:block}
+
+  /* LANDING */
+  #landing{padding-top:80px}
+  .hero{padding:6rem 2rem 4rem;max-width:900px;margin:0 auto;text-align:center}
+  .hero-tag{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border2);padding:6px 14px;border-radius:100px;font-size:0.75rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:2rem}
+  .hero-tag span{width:6px;height:6px;border-radius:50%;background:var(--accent);display:block;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+  .hero h1{font-size:clamp(3rem,8vw,6rem);font-weight:800;line-height:0.95;letter-spacing:-0.04em;margin-bottom:1.5rem}
+  .hero h1 em{font-style:normal;color:var(--accent)}
+  .hero p{font-size:1.1rem;color:var(--text2);max-width:500px;margin:0 auto 2.5rem;line-height:1.6;font-weight:300}
+  .hero-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+  .btn-primary{background:var(--accent);color:#000;border:none;padding:0.85rem 2rem;border-radius:4px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;cursor:pointer;transition:transform 0.15s}
+  .btn-primary:hover{transform:translateY(-2px)}
+  .btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border2);padding:0.85rem 2rem;border-radius:4px;font-family:'Syne',sans-serif;font-weight:600;font-size:0.9rem;cursor:pointer;transition:border-color 0.2s}
+  .btn-secondary:hover{border-color:var(--text3)}
+
+  /* STATS BAR */
+  .stats-bar{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:2rem;display:grid;grid-template-columns:repeat(3,1fr);max-width:700px;margin:0 auto}
+  .stat{text-align:center;padding:1rem}
+  .stat-num{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--accent)}
+  .stat-label{font-size:0.8rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;margin-top:4px}
+
+  /* FEATURES */
+  .section{padding:5rem 2rem;max-width:1000px;margin:0 auto}
+  .section-tag{font-size:0.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.15em;font-weight:500;margin-bottom:1rem}
+  .section h2{font-size:clamp(2rem,4vw,3rem);font-weight:800;letter-spacing:-0.03em;margin-bottom:3rem;line-height:1.1}
+  .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:var(--border)}
+  .feature-card{background:var(--bg);padding:2rem;transition:background 0.2s}
+  .feature-card:hover{background:var(--bg3)}
+  .feat-icon{width:40px;height:40px;border-radius:8px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:1.25rem}
+  .feature-card h3{font-size:1rem;font-weight:700;margin-bottom:0.5rem}
+  .feature-card p{font-size:0.85rem;color:var(--text2);line-height:1.6}
+
+  /* PRICING */
+  .pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;background:var(--border);margin-top:3rem}
+  .price-card{background:var(--bg);padding:2rem;position:relative}
+  .price-card.featured{background:var(--bg3)}
+  .price-badge{position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;font-size:0.7rem;font-weight:700;padding:4px 12px;font-family:'Syne',sans-serif;letter-spacing:0.05em}
+  .price-tier{font-size:0.75rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.75rem}
+  .price-amount{font-family:'Syne',sans-serif;font-size:2.5rem;font-weight:800;color:var(--text)}
+  .price-amount span{font-size:1rem;color:var(--text2);font-weight:400}
+  .price-desc{font-size:0.8rem;color:var(--text2);margin:0.5rem 0 1.5rem;line-height:1.5}
+  .price-features{list-style:none;margin-bottom:2rem}
+  .price-features li{font-size:0.82rem;padding:6px 0;border-bottom:1px solid var(--border);color:var(--text2);display:flex;gap:8px;align-items:center}
+  .price-features li::before{content:'→';color:var(--accent);font-size:0.7rem;flex-shrink:0}
+  .btn-plan{width:100%;padding:0.7rem;border-radius:4px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;transition:transform 0.15s}
+  .btn-plan.outline{background:transparent;color:var(--text);border:1px solid var(--border2)}
+  .btn-plan.outline:hover{border-color:var(--text3)}
+  .btn-plan.fill{background:var(--accent);color:#000;border:none}
+  .btn-plan.fill:hover{transform:scale(1.02)}
+
+  /* FOOTER */
+  footer{border-top:1px solid var(--border);padding:2rem;text-align:center}
+  footer p{font-size:0.8rem;color:var(--text3)}
+
+  /* APP SHELL */
+  #app{padding-top:0;background:var(--bg)}
+  .app-layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+  .sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:1.5rem 0;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .sidebar-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;color:var(--accent);padding:0 1.5rem 1.5rem;border-bottom:1px solid var(--border)}
+  .sidebar-nav{padding:1rem 0}
+  .sidebar-section{font-size:0.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.12em;padding:1rem 1.5rem 0.5rem}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:0.6rem 1.5rem;color:var(--text2);font-size:0.85rem;cursor:pointer;transition:all 0.15s;border-left:2px solid transparent}
+  .nav-item:hover{color:var(--text);background:var(--bg3)}
+  .nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(200,255,0,0.04)}
+  .nav-item-icon{font-size:0.9rem;width:18px;text-align:center}
+  .app-main{padding:2rem;overflow-y:auto;max-height:100vh}
+  .app-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+  .app-title{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700}
+  .app-subtitle{font-size:0.85rem;color:var(--text2);margin-top:2px}
+  .user-chip{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);padding:6px 12px;border-radius:100px;font-size:0.82rem;cursor:pointer}
+  .user-avatar{width:24px;height:24px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:0.6rem;color:#000}
+
+  /* DASHBOARD METRICS */
+  .metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-bottom:1px}
+  .metric-card{background:var(--bg2);padding:1.5rem}
+  .metric-label{font-size:0.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem}
+  .metric-value{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;line-height:1}
+  .metric-change{font-size:0.75rem;margin-top:6px}
+  .metric-change.up{color:var(--green)}
+  .metric-change.down{color:var(--red)}
+  .metric-change.warn{color:var(--amber)}
+
+  /* TABLES */
+  .data-section{background:var(--bg2);border:1px solid var(--border);margin-bottom:1rem}
+  .data-section-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+  .data-section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem}
+  .btn-sm{background:transparent;border:1px solid var(--border2);color:var(--text2);padding:5px 12px;border-radius:4px;font-size:0.78rem;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+  .btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-sm.accent{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:0.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;padding:0.75rem 1.5rem;text-align:left;border-bottom:1px solid var(--border)}
+  td{padding:0.9rem 1.5rem;font-size:0.85rem;border-bottom:1px solid var(--border);color:var(--text2)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:var(--bg3)}
+  .badge{display:inline-block;padding:3px 8px;border-radius:3px;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em}
+  .badge.ok{background:rgba(68,255,136,0.1);color:var(--green)}
+  .badge.low{background:rgba(255,204,0,0.1);color:var(--amber)}
+  .badge.out{background:rgba(255,68,68,0.1);color:var(--red)}
+  .badge.active{background:rgba(200,255,0,0.1);color:var(--accent)}
+
+  /* AI PANEL */
+  .ai-panel{background:var(--bg2);border:1px solid var(--border);display:flex;flex-direction:column;height:520px}
+  .ai-messages{flex:1;overflow-y:auto;padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:1rem}
+  .msg{max-width:80%;font-size:0.84rem;line-height:1.6;padding:0.75rem 1rem;border-radius:6px}
+  .msg.ai{background:var(--bg3);color:var(--text2);align-self:flex-start;border-left:2px solid var(--accent)}
+  .msg.user{background:rgba(200,255,0,0.08);color:var(--text);align-self:flex-end;border:1px solid rgba(200,255,0,0.2)}
+  .ai-input-row{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:0.75rem}
+  .ai-input{flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:0.6rem 1rem;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:0.84rem;outline:none}
+  .ai-input:focus{border-color:var(--accent)}
+  .ai-send{background:var(--accent);color:#000;border:none;padding:0.6rem 1rem;border-radius:4px;cursor:pointer;font-weight:700;font-size:0.82rem;font-family:'Syne',sans-serif;transition:transform 0.1s}
+  .ai-send:hover{transform:scale(1.03)}
+
+  /* AUTH */
+  #auth-page{min-height:100vh;display:none;align-items:center;justify-content:center;background:var(--bg);padding:2rem}
+  #auth-page.active{display:flex}
+  .auth-box{width:100%;max-width:420px}
+  .auth-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;color:var(--accent);margin-bottom:0.5rem}
+  .auth-sub{font-size:0.85rem;color:var(--text2);margin-bottom:2rem}
+  .auth-tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:4px;margin-bottom:2rem;overflow:hidden}
+  .auth-tab{flex:1;padding:0.65rem;font-family:'Syne',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text2);transition:all 0.15s}
+  .auth-tab.active{background:var(--accent);color:#000}
+  .form-group{margin-bottom:1.25rem}
+  .form-label{font-size:0.78rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;display:block}
+  .form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:0.7rem 1rem;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.2s}
+  .form-input:focus{border-color:var(--accent)}
+  .btn-full{width:100%;padding:0.85rem;background:var(--accent);color:#000;border:none;border-radius:4px;font-family:'Syne',sans-serif;font-weight:800;font-size:0.9rem;cursor:pointer;transition:transform 0.15s;margin-top:0.5rem}
+  .btn-full:hover{transform:scale(1.01)}
+  .auth-note{font-size:0.78rem;color:var(--text3);text-align:center;margin-top:1.5rem}
+  .auth-error{font-size:0.8rem;color:var(--red);background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.2);padding:0.6rem 1rem;border-radius:4px;margin-bottom:1rem;display:none}
+  .auth-loading{opacity:0.6;pointer-events:none}
+
+  /* SUPPLIERS */
+  .supplier-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1px;background:var(--border)}
+  .supplier-card{background:var(--bg2);padding:1.5rem;cursor:pointer;transition:background 0.15s}
+  .supplier-card:hover{background:var(--bg3)}
+  .supplier-name{font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;margin-bottom:4px}
+  .supplier-cat{font-size:0.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem}
+  .supplier-stat{display:flex;justify-content:space-between;font-size:0.8rem;margin-top:6px}
+  .supplier-stat-label{color:var(--text3)}
+  .supplier-stat-val{color:var(--text2);font-weight:500}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:1rem}
+  .modal-overlay.active{display:flex}
+  .modal{background:var(--bg2);border:1px solid var(--border2);width:100%;max-width:480px;padding:2rem;border-radius:6px}
+  .modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center}
+  .modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:1.2rem;transition:color 0.15s}
+  .modal-close:hover{color:var(--text)}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:1.5rem}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:2rem;right:2rem;background:var(--bg3);border:1px solid var(--border2);padding:0.75rem 1.25rem;border-radius:6px;font-size:0.85rem;z-index:300;transform:translateY(100px);opacity:0;transition:all 0.3s;max-width:320px}
+  .toast.show{transform:translateY(0);opacity:1}
+  .toast.success{border-color:rgba(68,255,136,0.3);color:var(--green)}
+  .toast.error{border-color:rgba(255,68,68,0.3);color:var(--red)}
+
+  /* SUPABASE STATUS BANNER */
+  .db-banner{background:rgba(200,255,0,0.04);border:1px solid rgba(200,255,0,0.15);padding:0.6rem 1.25rem;font-size:0.78rem;color:var(--text2);display:flex;align-items:center;gap:8px;margin-bottom:1.5rem;border-radius:4px}
+  .db-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
+  .db-dot.offline{background:var(--amber)}
+
+  /* SETTINGS PAGE */
+  .settings-section{background:var(--bg2);border:1px solid var(--border);margin-bottom:1rem}
+  .settings-row{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:1rem}
+  .settings-row:last-child{border-bottom:none}
+  .settings-label{font-size:0.88rem;font-weight:500}
+  .settings-desc{font-size:0.78rem;color:var(--text3);margin-top:2px}
+
+  /* RESPONSIVE */
+  @media(max-width:700px){
+    .app-layout{grid-template-columns:1fr}
+    .sidebar{display:none}
+    .metrics-grid{grid-template-columns:repeat(2,1fr)}
+    .nav-links{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ADD PRODUCT MODAL -->
+<div class="modal-overlay" id="modal-add-product">
+  <div class="modal">
+    <div class="modal-title">Add Product <button class="modal-close" onclick="closeModal('modal-add-product')">✕</button></div>
+    <div class="form-group">
+      <label class="form-label">SKU</label>
+      <input class="form-input" id="new-sku" placeholder="e.g. RX-009">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Product Name</label>
+      <input class="form-input" id="new-name" placeholder="e.g. Vitamin C Serum 50ml">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <input class="form-input" id="new-category" placeholder="e.g. Serums">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="form-group">
+        <label class="form-label">Current Stock</label>
+        <input class="form-input" id="new-stock" type="number" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reorder At</label>
+        <input class="form-input" id="new-threshold" type="number" placeholder="10">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Supplier</label>
+      <input class="form-input" id="new-supplier" placeholder="e.g. BeautySource Co.">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm" onclick="closeModal('modal-add-product')">Cancel</button>
+      <button class="btn-sm accent" onclick="addProduct()">Add Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD SUPPLIER MODAL -->
+<div class="modal-overlay" id="modal-add-supplier">
+  <div class="modal">
+    <div class="modal-title">Add Supplier <button class="modal-close" onclick="closeModal('modal-add-supplier')">✕</button></div>
+    <div class="form-group">
+      <label class="form-label">Supplier Name</label>
+      <input class="form-input" id="sup-name" placeholder="e.g. DermLab SA">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <input class="form-input" id="sup-cat" placeholder="e.g. Active Ingredients">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Location</label>
+      <input class="form-input" id="sup-location" placeholder="e.g. Cape Town">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="form-group">
+        <label class="form-label">Lead Time</label>
+        <input class="form-input" id="sup-lead" placeholder="e.g. 3–5 days">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reliability %</label>
+        <input class="form-input" id="sup-reliability" type="number" placeholder="95">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm" onclick="closeModal('modal-add-supplier')">Cancel</button>
+      <button class="btn-sm accent" onclick="addSupplier()">Add Supplier</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUPABASE CONFIG MODAL -->
+<div class="modal-overlay" id="modal-supabase">
+  <div class="modal">
+    <div class="modal-title">Connect Supabase <button class="modal-close" onclick="closeModal('modal-supabase')">✕</button></div>
+    <p style="font-size:0.83rem;color:var(--text2);margin-bottom:1.5rem;line-height:1.6">Enter your Supabase project credentials to enable real data persistence. Find these in your Supabase project → Settings → API.</p>
+    <div class="form-group">
+      <label class="form-label">Project URL</label>
+      <input class="form-input" id="sb-url" placeholder="https://xxxx.supabase.co">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Anon/Public Key</label>
+      <input class="form-input" id="sb-key" placeholder="eyJh...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm" onclick="closeModal('modal-supabase')">Cancel</button>
+      <button class="btn-sm accent" onclick="connectSupabase()">Connect & Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH PAGE -->
+<div id="auth-page">
+  <div class="auth-box">
+    <div class="auth-logo">RESTOX</div>
+    <div class="auth-sub">AI-powered inventory management</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Sign Up</button>
+    </div>
+    <div id="auth-error" class="auth-error"></div>
+    <div id="login-form">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="login-email" placeholder="you@company.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="login-pass" placeholder="••••••••">
+      </div>
+      <button class="btn-full" id="login-btn" onclick="doLogin()">Sign In →</button>
+    </div>
+    <div id="signup-form" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Business Name</label>
+        <input class="form-input" type="text" id="signup-biz" placeholder="Your Store Name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="signup-email" placeholder="you@company.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="signup-pass" placeholder="Create a password">
+      </div>
+      <button class="btn-full" id="signup-btn" onclick="doSignup()">Create Account →</button>
+    </div>
+    <p class="auth-note" id="auth-mode-note">No Supabase? <a href="#" onclick="goToApp()" style="color:var(--accent);text-decoration:none">Continue with demo →</a></p>
+  </div>
+</div>
+
+<!-- LANDING PAGE -->
+<div id="landing" class="page active">
+  <nav>
+    <div class="logo">RESTOX</div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#" onclick="showAuth()">Sign In</a>
+      <button class="nav-cta" onclick="showAuth()">Get Started</button>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-tag"><span></span>AI-Powered Inventory</div>
+    <h1>Stop running<br>out of <em>stock.</em></h1>
+    <p>Restox monitors your inventory in real time, predicts when to reorder, and manages your suppliers — all powered by AI.</p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="showAuth()">Start Free Trial</button>
+      <button class="btn-secondary" onclick="goToApp()">View Demo</button>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-num">2.3x</div><div class="stat-label">Faster Reordering</div></div>
+    <div class="stat"><div class="stat-num">94%</div><div class="stat-label">Stockout Prevention</div></div>
+    <div class="stat"><div class="stat-num">$0</div><div class="stat-label">Setup Cost</div></div>
+  </div>
+
+  <div class="section" id="features">
+    <div class="section-tag">Features</div>
+    <h2>Everything your<br>inventory needs</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feat-icon">📦</div>
+        <h3>Real-Time Tracking</h3>
+        <p>Monitor stock levels across all your products. Get instant alerts before you run out.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon">🤖</div>
+        <h3>AI Advisor</h3>
+        <p>Ask your inventory anything. Get smart reorder suggestions and demand forecasting.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon">🏭</div>
+        <h3>Supplier Management</h3>
+        <p>Track all your suppliers, lead times, and reliability scores in one place.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon">⚡</div>
+        <h3>Smart Alerts</h3>
+        <p>Automated low stock and out-of-stock notifications before problems escalate.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon">📊</div>
+        <h3>Analytics</h3>
+        <p>Understand your inventory trends, turnover rates, and supplier performance.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon">🔗</div>
+        <h3>Integrations</h3>
+        <p>Connect to your existing tools. Export data, sync orders, and automate workflows.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="pricing">
+    <div class="section-tag">Pricing</div>
+    <h2>Simple,<br>transparent pricing</h2>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-tier">Starter</div>
+        <div class="price-amount">$19<span>/mo</span></div>
+        <p class="price-desc">For small businesses just getting started with inventory management.</p>
+        <ul class="price-features">
+          <li>Up to 100 SKUs</li><li>3 suppliers</li><li>Basic AI</li><li>1 user</li><li>Email alerts</li>
+        </ul>
+        <button class="btn-plan outline" onclick="showAuth()">Get Started</button>
+      </div>
+      <div class="price-card featured">
+        <div class="price-badge">POPULAR</div>
+        <div class="price-tier">Growth</div>
+        <div class="price-amount">$49<span>/mo</span></div>
+        <p class="price-desc">For growing businesses that need full AI-powered operations.</p>
+        <ul class="price-features">
+          <li>Unlimited SKUs</li><li>Unlimited suppliers</li><li>Full AI advisor</li><li>5 users</li><li>Priority alerts</li>
+        </ul>
+        <button class="btn-plan fill" onclick="showAuth()">Get Started</button>
+      </div>
+      <div class="price-card">
+        <div class="price-tier">Enterprise</div>
+        <div class="price-amount">$149<span>/mo</span></div>
+        <p class="price-desc">For large operations requiring advanced features and dedicated support.</p>
+        <ul class="price-features">
+          <li>Everything in Growth</li><li>Multi-location</li><li>API access</li><li>Priority support</li><li>Custom integrations</li>
+        </ul>
+        <button class="btn-plan outline" onclick="showAuth()">Contact Sales</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>© 2025 Restox. AI-powered inventory management for modern businesses.</p>
+  </footer>
+</div>
+
+<!-- APP -->
+<div id="app" class="page">
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">RESTOX</div>
+      <nav class="sidebar-nav">
+        <div class="sidebar-section">Main</div>
+        <div class="nav-item active" onclick="showSection('dashboard',this)">
+          <span class="nav-item-icon">▦</span> Dashboard
+        </div>
+        <div class="nav-item" onclick="showSection('inventory',this)">
+          <span class="nav-item-icon">📦</span> Inventory
+        </div>
+        <div class="nav-item" onclick="showSection('suppliers',this)">
+          <span class="nav-item-icon">🏭</span> Suppliers
+        </div>
+        <div class="sidebar-section">Tools</div>
+        <div class="nav-item" onclick="showSection('ai',this)">
+          <span class="nav-item-icon">🤖</span> AI Advisor
+        </div>
+        <div class="sidebar-section">Account</div>
+        <div class="nav-item" onclick="showSection('billing',this)">
+          <span class="nav-item-icon">💳</span> Billing
+        </div>
+        <div class="nav-item" onclick="showSection('settings',this)">
+          <span class="nav-item-icon">⚙</span> Settings
+        </div>
+        <div class="nav-item" onclick="logout()" style="margin-top:auto;color:var(--text3)">
+          <span class="nav-item-icon">↩</span> Sign Out
+        </div>
+      </nav>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="app-main">
+
+      <!-- DASHBOARD -->
+      <div id="section-dashboard">
+        <div class="app-header">
+          <div>
+            <div class="app-title" id="dash-greeting">Good morning</div>
+            <div class="app-subtitle" id="dash-date"></div>
+          </div>
+          <div class="user-chip" onclick="showSection('settings',document.querySelector('.nav-item:nth-child(7)'))">
+            <div class="user-avatar" id="user-avatar">U</div>
+            <span id="user-name-display">User</span>
+          </div>
+        </div>
+
+        <div id="db-status-banner" class="db-banner" style="display:none">
+          <div class="db-dot offline" id="db-dot"></div>
+          <span id="db-status-text">Demo mode — connect Supabase in Settings for real data persistence</span>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">Total SKUs</div>
+            <div class="metric-value" id="metric-skus">148</div>
+            <div class="metric-change up">↑ 12 this month</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Low Stock</div>
+            <div class="metric-value warn" id="metric-low" style="color:var(--amber)">7</div>
+            <div class="metric-change warn">⚠ Needs attention</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Out of Stock</div>
+            <div class="metric-value" id="metric-out" style="color:var(--red)">2</div>
+            <div class="metric-change down">↑ 1 since yesterday</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Suppliers</div>
+            <div class="metric-value" id="metric-suppliers">9</div>
+            <div class="metric-change up">All active</div>
+          </div>
+        </div>
+
+        <div style="height:1px;background:var(--border);margin:1px 0"></div>
+
+        <div class="data-section" style="margin-top:1rem">
+          <div class="data-section-header">
+            <span class="data-section-title">⚠ Alerts — Items Needing Action</span>
+            <button class="btn-sm" onclick="showSection('inventory',document.querySelectorAll('.nav-item')[1])">View All</button>
+          </div>
+          <table>
+            <thead><tr><th>Product</th><th>Stock</th><th>Threshold</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="alerts-tbody">
+              <tr><td>Vitamin C Serum 30ml</td><td>4 units</td><td>10</td><td><span class="badge low">LOW</span></td><td><button class="btn-sm" onclick="reorderItem('Vitamin C Serum 30ml')">Reorder</button></td></tr>
+              <tr><td>Retinol Night Cream</td><td>0 units</td><td>15</td><td><span class="badge out">OUT</span></td><td><button class="btn-sm accent" onclick="reorderItem('Retinol Night Cream')">Urgent</button></td></tr>
+              <tr><td>Hyaluronic Moisturiser</td><td>6 units</td><td>20</td><td><span class="badge low">LOW</span></td><td><button class="btn-sm" onclick="reorderItem('Hyaluronic Moisturiser')">Reorder</button></td></tr>
+              <tr><td>SPF 50 Sunscreen</td><td>0 units</td><td>12</td><td><span class="badge out">OUT</span></td><td><button class="btn-sm accent" onclick="reorderItem('SPF 50 Sunscreen')">Urgent</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- INVENTORY -->
+      <div id="section-inventory" style="display:none">
+        <div class="app-header">
+          <div>
+            <div class="app-title">Inventory</div>
+            <div class="app-subtitle" id="inventory-count">148 products tracked</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-sm" onclick="exportInventory()">Export CSV</button>
+            <button class="btn-sm accent" onclick="openModal('modal-add-product')">+ Add Product</button>
+          </div>
+        </div>
+        <div class="data-section">
+          <div class="data-section-header">
+            <span class="data-section-title">All Products</span>
+            <input class="form-input" id="inventory-search" placeholder="Search products..." style="width:200px;padding:5px 10px;font-size:0.82rem" oninput="filterInventory(this.value)">
+          </div>
+          <table>
+            <thead><tr><th>SKU</th><th>Product</th><th>Category</th><th>Stock</th><th>Reorder At</th><th>Supplier</th><th>Status</th><th></th></tr></thead>
+            <tbody id="inventory-tbody">
+              <tr><td style="color:var(--text3);font-size:0.75rem">RX-001</td><td>Vitamin C Serum 30ml</td><td>Serums</td><td>4</td><td>10</td><td>BeautySource Co.</td><td><span class="badge low">LOW</span></td><td><button class="btn-sm" onclick="deleteProduct('RX-001')">✕</button></td></tr>
+              <tr><td style="color:var(--text3);font-size:0.75rem">RX-002</td><td>Retinol Night Cream</td><td>Moisturisers</td><td>0</td><td>15</td><td>DermLab SA</td><td><span class="badge out">OUT</span></td><td><button class="btn-sm" onclick="deleteProduct('RX-002')">✕</button></td></tr>
+              <tr><td style="color:var(--text3);font-size:0.75rem">RX-003</td><td>Hyaluronic Moisturiser</td><td>Moisturisers</td><td>6</td><td>20</td><td>BeautySource Co.</td><td><span class="badge low">LOW</span></td><td><button class="btn-sm" onclick="deleteProduct('RX-003')">✕</button></td></tr>
+              <tr><td style="color:var(--text3);font-size:0.75rem">RX-004</td><td>SPF 50 Sunscreen</td><td>Sun Care</td><td>0</td><td>12</td><td>SkinShield Ltd.</td><td><span class="badge out">OUT</span></td><td><button class="btn-sm" onclick="deleteProduct('RX-004')">✕</button></td></tr>
+              <tr><td style="color:var(--text3);font-size:0.75rem">RX-005</td><td>Niacinamide Toner</td><td>Toners</td><td>34</td><td>10</td><td>BeautySource Co.</td><td><span class="badge ok">OK</span></td><td><button class="btn-sm" onclick="deleteProduct('RX-005')">✕</button></td></tr>
+              <tr><td style="color:var(--text3);font-size:0.75rem">RX-006</td><td>Glycolic Acid Peel</td><td>Treatments</td><td>22</td><td>8</td><td>DermLab SA</td><td><span class="badge ok">OK</span></td><td><button class="btn-sm" onclick="deleteProduct('RX-006')">✕</button></td></tr>
+              <tr><td style="color:var(--text3);font-size:0.75rem">RX-007</td><td>Rose Hip Oil 50ml</td><td>Oils</td><td>19</td><td>15</td><td>NatureBotanica</td><td><span class="badge ok">OK</span></td><td><button class="btn-sm" onclick="deleteProduct('RX-007')">✕</button></td></tr>
+              <tr><td style="color:var(--text3);font-size:0.75rem">RX-008</td><td>Collagen Eye Cream</td><td>Eye Care</td><td>11</td><td>10</td><td>DermLab SA</td><td><span class="badge ok">OK</span></td><td><button class="btn-sm" onclick="deleteProduct('RX-008')">✕</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SUPPLIERS -->
+      <div id="section-suppliers" style="display:none">
+        <div class="app-header">
+          <div>
+            <div class="app-title">Suppliers</div>
+            <div class="app-subtitle" id="supplier-count">9 active suppliers</div>
+          </div>
+          <button class="btn-sm accent" onclick="openModal('modal-add-supplier')">+ Add Supplier</button>
+        </div>
+        <div class="supplier-cards" id="supplier-cards">
+          <div class="supplier-card" data-id="sup-1">
+            <div class="supplier-name">BeautySource Co.</div>
+            <div class="supplier-cat">Skincare · South Africa</div>
+            <div style="margin-bottom:0.75rem"><span class="badge active">ACTIVE</span></div>
+            <div class="supplier-stat"><span class="supplier-stat-label">Products</span><span class="supplier-stat-val">42</span></div>
+            <div class="supplier-stat"><span class="supplier-stat-label">Lead Time</span><span class="supplier-stat-val">5–7 days</span></div>
+            <div class="supplier-stat"><span class="supplier-stat-label">Reliability</span><span class="supplier-stat-val" style="color:var(--green)">98%</span></div>
+          </div>
+          <div class="supplier-card" data-id="sup-2">
+            <div class="supplier-name">DermLab SA</div>
+            <div class="supplier-cat">Active Ingredients · Cape Town</div>
+            <div style="margin-bottom:0.75rem"><span class="badge active">ACTIVE</span></div>
+            <div class="supplier-stat"><span class="supplier-stat-label">Products</span><span class="supplier-stat-val">31</span></div>
+            <div class="supplier-stat"><span class="supplier-stat-label">Lead Time</span><span class="supplier-stat-val">3–5 days</span></div>
+            <div class="supplier-stat"><span class="supplier-stat-label">Reliability</span><span class="supplier-stat-val" style="color:var(--green)">95%</span></div>
+          </div>
+          <div class="supplier-card" data-id="sup-3">
+            <div class="supplier-name">SkinShield Ltd.</div>
+            <div class="supplier-cat">Sun Care · Johannesburg</div>
+            <div style="margin-bottom:0.75rem"><span class="badge active">ACTIVE</span></div>
+            <div class="supplier-stat"><span class="supplier-stat-label">Products</span><span class="supplier-stat-val">18</span></div>
+            <div class="supplier-stat"><span class="supplier-stat-label">Lead Time</span><span class="supplier-stat-val">7–10 days</span></div>
+            <div class="supplier-stat"><span class="supplier-stat-label">Reliability</span><span class="supplier-stat-val" style="color:var(--amber)">81%</span></div>
+          </div>
+          <div class="supplier-card" data-id="sup-4">
+            <div class="supplier-name">NatureBotanica</div>
+            <div class="supplier-cat">Natural Oils · Botswana</div>
+            <div style="margin-bottom:0.75rem"><span class="badge active">ACTIVE</span></div>
+            <div class="supplier-stat"><span class="supplier-stat-label">Products</span><span class="supplier-stat-val">14</span></div>
+            <div class="supplier-stat"><span class="supplier-stat-label">Lead Time</span><span class="supplier-stat-val">2–3 days</span></div>
+            <div class="supplier-stat"><span class="supplier-stat-label">Reliability</span><span class="supplier-stat-val" style="color:var(--green)">100%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI ADVISOR -->
+      <div id="section-ai" style="display:none">
+        <div class="app-header">
+          <div>
+            <div class="app-title">AI Advisor</div>
+            <div class="app-subtitle">Powered by Claude</div>
+          </div>
+          <button class="btn-sm" onclick="clearAiChat()">Clear Chat</button>
+        </div>
+        <div class="ai-panel">
+          <div class="ai-messages" id="ai-messages">
+            <div class="msg ai">Hello. I'm your Restox AI Advisor. I can analyze your inventory, suggest reorder quantities, forecast demand, and help you manage your suppliers. What would you like to know?</div>
+          </div>
+          <div class="ai-input-row">
+            <input class="ai-input" id="ai-input" placeholder="Ask about your inventory..." onkeydown="if(event.key==='Enter')sendAiMsg()">
+            <button class="ai-send" onclick="sendAiMsg()">Send →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BILLING -->
+      <div id="section-billing" style="display:none">
+        <div class="app-header">
+          <div>
+            <div class="app-title">Billing</div>
+            <div class="app-subtitle">Manage your subscription</div>
+          </div>
+        </div>
+        <div class="data-section" style="margin-bottom:1rem">
+          <div class="data-section-header"><span class="data-section-title">Current Plan</span></div>
+          <div style="padding:1.5rem;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700">Growth Plan</div>
+              <div style="font-size:0.82rem;color:var(--text2);margin-top:4px">$49/month · Renews Jan 15, 2026</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-sm" onclick="showToast('Cancellation requires Stripe integration','error')">Cancel</button>
+              <button class="btn-sm accent" onclick="showToast('Stripe integration coming next — connect Supabase first','')">Upgrade to Enterprise</button>
+            </div>
+          </div>
+        </div>
+        <div class="pricing-grid" style="margin-top:0">
+          <div class="price-card">
+            <div class="price-tier">Starter</div>
+            <div class="price-amount">$19<span>/mo</span></div>
+            <ul class="price-features">
+              <li>Up to 100 SKUs</li><li>3 suppliers</li><li>Basic AI</li><li>1 user</li>
+            </ul>
+            <button class="btn-plan outline">Downgrade</button>
+          </div>
+          <div class="price-card featured">
+            <div class="price-badge">CURRENT</div>
+            <div class="price-tier">Growth</div>
+            <div class="price-amount">$49<span>/mo</span></div>
+            <ul class="price-features">
+              <li>Unlimited SKUs</li><li>Unlimited suppliers</li><li>Full AI advisor</li><li>5 users</li>
+            </ul>
+            <button class="btn-plan fill" disabled style="opacity:0.4;cursor:default">Active Plan</button>
+          </div>
+          <div class="price-card">
+            <div class="price-tier">Enterprise</div>
+            <div class="price-amount">$149<span>/mo</span></div>
+            <ul class="price-features">
+              <li>Everything in Growth</li><li>Multi-location</li><li>API access</li><li>Priority support</li>
+            </ul>
+            <button class="btn-plan outline" onclick="showToast('Stripe integration coming next session','')">Upgrade</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div id="section-settings" style="display:none">
+        <div class="app-header">
+          <div>
+            <div class="app-title">Settings</div>
+            <div class="app-subtitle">Manage your account and integrations</div>
+          </div>
+        </div>
+
+        <!-- Supabase -->
+        <div style="font-family:'Syne',sans-serif;font-size:0.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:0.75rem">Database</div>
+        <div class="settings-section">
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Supabase Connection</div>
+              <div class="settings-desc" id="sb-status-text">Not connected — using demo data</div>
+            </div>
+            <button class="btn-sm accent" id="sb-connect-btn" onclick="openModal('modal-supabase')">Connect</button>
+          </div>
+          <div class="settings-row" id="sb-schema-row" style="display:none">
+            <div>
+              <div class="settings-label">Initialize Schema</div>
+              <div class="settings-desc">Create the required tables in your Supabase project</div>
+            </div>
+            <button class="btn-sm" onclick="showSchemaSQL()">View SQL</button>
+          </div>
+        </div>
+
+        <!-- Account -->
+        <div style="font-family:'Syne',sans-serif;font-size:0.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:0.75rem;margin-top:1.5rem">Account</div>
+        <div class="settings-section">
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Business Name</div>
+              <div class="settings-desc" id="biz-name-display">—</div>
+            </div>
+            <button class="btn-sm">Edit</button>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Email</div>
+              <div class="settings-desc" id="email-display">—</div>
+            </div>
+            <button class="btn-sm">Change</button>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Password</div>
+              <div class="settings-desc">Last changed: never</div>
+            </div>
+            <button class="btn-sm">Update</button>
+          </div>
+        </div>
+
+        <!-- Danger -->
+        <div style="font-family:'Syne',sans-serif;font-size:0.72rem;color:var(--red);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:0.75rem;margin-top:1.5rem">Danger Zone</div>
+        <div class="settings-section">
+          <div class="settings-row">
+            <div>
+              <div class="settings-label" style="color:var(--red)">Delete Account</div>
+              <div class="settings-desc">Permanently delete your account and all data</div>
+            </div>
+            <button class="btn-sm" style="border-color:rgba(255,68,68,0.3);color:var(--red)" onclick="showToast('This would require Supabase to execute','error')">Delete</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- SCHEMA MODAL -->
+<div class="modal-overlay" id="modal-schema">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-title">Supabase Schema SQL <button class="modal-close" onclick="closeModal('modal-schema')">✕</button></div>
+    <p style="font-size:0.8rem;color:var(--text2);margin-bottom:1rem">Run this in your Supabase SQL Editor to create the required tables.</p>
+    <pre id="schema-sql" style="background:var(--bg3);border:1px solid var(--border);padding:1rem;border-radius:4px;font-size:0.75rem;color:var(--text2);overflow-x:auto;line-height:1.6;white-space:pre-wrap"></pre>
+    <div class="modal-actions">
+      <button class="btn-sm" onclick="closeModal('modal-schema')">Close</button>
+      <button class="btn-sm accent" onclick="copySchema()">Copy SQL</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── SUPABASE ────────────────────────────────────────────────────────
+let supabase = null;
+let sbConnected = false;
+
+function initSupabase(url, key) {
+  try {
+    supabase = window.supabase.createClient(url, key);
+    sbConnected = true;
+    localStorage.setItem('rx_sb_url', url);
+    localStorage.setItem('rx_sb_key', key);
+    updateDbStatus(true);
+    return true;
+  } catch(e) {
+    return false;
+  }
+}
+
+function updateDbStatus(connected) {
+  const banner = document.getElementById('db-status-banner');
+  const dot = document.getElementById('db-dot');
+  const text = document.getElementById('db-status-text');
+  const sbText = document.getElementById('sb-status-text');
+  const sbBtn = document.getElementById('sb-connect-btn');
+  const schemaRow = document.getElementById('sb-schema-row');
+
+  banner.style.display = 'flex';
+  if (connected) {
+    dot.classList.remove('offline');
+    text.textContent = 'Supabase connected — data is being persisted';
+    sbText.textContent = 'Connected — real data persistence active';
+    sbBtn.textContent = 'Reconnect';
+    schemaRow.style.display = 'flex';
+  } else {
+    dot.classList.add('offline');
+    text.textContent = 'Demo mode — connect Supabase in Settings for real data persistence';
+    sbText.textContent = 'Not connected — using demo data';
+    sbBtn.textContent = 'Connect';
+    schemaRow.style.display = 'none';
+  }
+}
+
+async function connectSupabase() {
+  const url = document.getElementById('sb-url').value.trim();
+  const key = document.getElementById('sb-key').value.trim();
+  if (!url || !key) { showToast('Enter both URL and key', 'error'); return; }
+
+  const ok = initSupabase(url, key);
+  if (ok) {
+    closeModal('modal-supabase');
+    showToast('Supabase connected!', 'success');
+    // Try to load real data
+    await loadInventoryFromDB();
+    await loadSuppliersFromDB();
+  } else {
+    showToast('Failed to connect — check credentials', 'error');
+  }
+}
+
+// ─── SUPABASE SCHEMA ─────────────────────────────────────────────────
+const SCHEMA_SQL = `-- Restox Schema
+-- Run this in your Supabase SQL Editor
+
+create table if not exists public.products (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade,
+  sku text not null,
+  name text not null,
+  category text,
+  stock integer default 0,
+  reorder_threshold integer default 10,
+  supplier text,
+  created_at timestamptz default now()
+);
+
+create table if not exists public.suppliers (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade,
+  name text not null,
+  category text,
+  location text,
+  lead_time text,
+  reliability integer default 95,
+  product_count integer default 0,
+  created_at timestamptz default now()
+);
+
+-- Row Level Security
+alter table public.products enable row level security;
+alter table public.suppliers enable row level security;
+
+create policy "Users see own products" on public.products
+  for all using (auth.uid() = user_id);
+
+create policy "Users see own suppliers" on public.suppliers
+  for all using (auth.uid() = user_id);`;
+
+function showSchemaSQL() {
+  document.getElementById('schema-sql').textContent = SCHEMA_SQL;
+  openModal('modal-schema');
+}
+
+function copySchema() {
+  navigator.clipboard.writeText(SCHEMA_SQL);
+  showToast('SQL copied to clipboard', 'success');
+}
+
+// ─── AUTH ─────────────────────────────────────────────────────────────
+let currentUser = null;
+let isDemo = false;
+
+function showAuth() {
+  document.getElementById('landing').classList.remove('active');
+  document.getElementById('auth-page').classList.add('active');
+}
+
+function goToApp() {
+  isDemo = true;
+  currentUser = { name: 'Demo User', email: 'demo@restox.io' };
+  enterApp();
+}
+
+function switchAuthTab(tab) {
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+  document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('signup-form').style.display = tab === 'signup' ? 'block' : 'none';
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+function setAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  document.getElementById('auth-error').style.display = 'none';
+
+  if (supabase) {
+    const btn = document.getElementById('login-btn');
+    btn.classList.add('auth-loading');
+    btn.textContent = 'Signing in...';
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+      if (error) { setAuthError(error.message); btn.textContent = 'Sign In →'; btn.classList.remove('auth-loading'); return; }
+      currentUser = { name: data.user.email.split('@')[0], email: data.user.email, id: data.user.id };
+    } catch(e) {
+      setAuthError('Login failed. Try demo mode.');
+      btn.textContent = 'Sign In →'; btn.classList.remove('auth-loading'); return;
+    }
+    btn.textContent = 'Sign In →'; btn.classList.remove('auth-loading');
+  } else {
+    // Demo fallback
+    if (!email) { setAuthError('Enter an email address'); return; }
+    currentUser = { name: email.split('@')[0], email };
+    isDemo = true;
+  }
+  enterApp();
+}
+
+async function doSignup() {
+  const biz = document.getElementById('signup-biz').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const pass = document.getElementById('signup-pass').value;
+  document.getElementById('auth-error').style.display = 'none';
+
+  if (supabase) {
+    const btn = document.getElementById('signup-btn');
+    btn.classList.add('auth-loading');
+    btn.textContent = 'Creating account...';
+    try {
+      const { data, error } = await supabase.auth.signUp({ email, password: pass, options: { data: { business_name: biz } } });
+      if (error) { setAuthError(error.message); btn.textContent = 'Create Account →'; btn.classList.remove('auth-loading'); return; }
+      showToast('Check your email to confirm your account', 'success');
+      currentUser = { name: biz || email.split('@')[0], email, id: data.user?.id };
+    } catch(e) {
+      setAuthError('Signup failed. Try demo mode.');
+      btn.textContent = 'Create Account →'; btn.classList.remove('auth-loading'); return;
+    }
+    btn.textContent = 'Create Account →'; btn.classList.remove('auth-loading');
+  } else {
+    if (!email) { setAuthError('Enter an email address'); return; }
+    currentUser = { name: biz || email.split('@')[0], email };
+    isDemo = true;
+  }
+  enterApp();
+}
+
+function enterApp() {
+  document.getElementById('auth-page').classList.remove('active');
+  document.getElementById('landing').classList.remove('active');
+  document.getElementById('app').classList.add('active');
+
+  const name = currentUser?.name || 'User';
+  document.getElementById('user-name-display').textContent = name.split(' ')[0];
+  document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('biz-name-display').textContent = name;
+  document.getElementById('email-display').textContent = currentUser?.email || '—';
+
+  const h = new Date().getHours();
+  const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('dash-greeting').textContent = greet + ', ' + name.split(' ')[0];
+
+  const now = new Date();
+  document.getElementById('dash-date').textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  if (isDemo || !supabase) {
+    updateDbStatus(false);
+  } else {
+    updateDbStatus(true);
+    loadInventoryFromDB();
+    loadSuppliersFromDB();
+  }
+}
+
+function logout() {
+  if (supabase) supabase.auth.signOut();
+  currentUser = null; isDemo = false;
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('landing').classList.add('active');
+  showSection('dashboard', document.querySelector('.nav-item'));
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────
+function showSection(id, el) {
+  document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
+  document.getElementById('section-' + id).style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+// ─── INVENTORY ────────────────────────────────────────────────────────
+let inventoryData = [
+  { sku: 'RX-001', name: 'Vitamin C Serum 30ml', category: 'Serums', stock: 4, threshold: 10, supplier: 'BeautySource Co.' },
+  { sku: 'RX-002', name: 'Retinol Night Cream', category: 'Moisturisers', stock: 0, threshold: 15, supplier: 'DermLab SA' },
+  { sku: 'RX-003', name: 'Hyaluronic Moisturiser', category: 'Moisturisers', stock: 6, threshold: 20, supplier: 'BeautySource Co.' },
+  { sku: 'RX-004', name: 'SPF 50 Sunscreen', category: 'Sun Care', stock: 0, threshold: 12, supplier: 'SkinShield Ltd.' },
+  { sku: 'RX-005', name: 'Niacinamide Toner', category: 'Toners', stock: 34, threshold: 10, supplier: 'BeautySource Co.' },
+  { sku: 'RX-006', name: 'Glycolic Acid Peel', category: 'Treatments', stock: 22, threshold: 8, supplier: 'DermLab SA' },
+  { sku: 'RX-007', name: 'Rose Hip Oil 50ml', category: 'Oils', stock: 19, threshold: 15, supplier: 'NatureBotanica' },
+  { sku: 'RX-008', name: 'Collagen Eye Cream', category: 'Eye Care', stock: 11, threshold: 10, supplier: 'DermLab SA' },
+];
+
+function getStatus(item) {
+  if (item.stock === 0) return 'out';
+  if (item.stock <= item.threshold) return 'low';
+  return 'ok';
+}
+
+function renderInventory(data) {
+  const tbody = document.getElementById('inventory-tbody');
+  tbody.innerHTML = data.map(item => {
+    const status = getStatus(item);
+    return `<tr>
+      <td style="color:var(--text3);font-size:0.75rem">${item.sku}</td>
+      <td>${item.name}</td><td>${item.category}</td>
+      <td>${item.stock}</td><td>${item.threshold}</td>
+      <td>${item.supplier}</td>
+      <td><span class="badge ${status}">${status.toUpperCase()}</span></td>
+      <td><button class="btn-sm" onclick="deleteProduct('${item.sku}')">✕</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('inventory-count').textContent = data.length + ' products tracked';
+}
+
+function filterInventory(query) {
+  const q = query.toLowerCase();
+  const filtered = inventoryData.filter(i =>
+    i.name.toLowerCase().includes(q) || i.sku.toLowerCase().includes(q) || i.category.toLowerCase().includes(q)
+  );
+  renderInventory(filtered);
+}
+
+async function addProduct() {
+  const sku = document.getElementById('new-sku').value.trim();
+  const name = document.getElementById('new-name').value.trim();
+  const category = document.getElementById('new-category').value.trim();
+  const stock = parseInt(document.getElementById('new-stock').value) || 0;
+  const threshold = parseInt(document.getElementById('new-threshold').value) || 10;
+  const supplier = document.getElementById('new-supplier').value.trim();
+
+  if (!sku || !name) { showToast('SKU and name are required', 'error'); return; }
+
+  const item = { sku, name, category, stock, threshold, supplier };
+
+  if (supabase && currentUser?.id) {
+    const { error } = await supabase.from('products').insert([{ ...item, user_id: currentUser.id }]);
+    if (error) { showToast('DB error: ' + error.message, 'error'); return; }
+  }
+
+  inventoryData.push(item);
+  renderInventory(inventoryData);
+  updateMetrics();
+  closeModal('modal-add-product');
+  showToast(name + ' added to inventory', 'success');
+
+  // Clear fields
+  ['new-sku','new-name','new-category','new-stock','new-threshold','new-supplier'].forEach(id => document.getElementById(id).value = '');
+}
+
+async function deleteProduct(sku) {
+  if (!confirm('Remove ' + sku + ' from inventory?')) return;
+
+  if (supabase && currentUser?.id) {
+    await supabase.from('products').delete().eq('sku', sku).eq('user_id', currentUser.id);
+  }
+
+  inventoryData = inventoryData.filter(i => i.sku !== sku);
+  renderInventory(inventoryData);
+  updateMetrics();
+  showToast(sku + ' removed', '');
+}
+
+async function loadInventoryFromDB() {
+  if (!supabase || !currentUser?.id) return;
+  const { data, error } = await supabase.from('products').select('*').eq('user_id', currentUser.id);
+  if (error) { showToast('Could not load inventory: ' + error.message, 'error'); return; }
+  if (data && data.length > 0) {
+    inventoryData = data.map(r => ({
+      sku: r.sku, name: r.name, category: r.category || '',
+      stock: r.stock, threshold: r.reorder_threshold, supplier: r.supplier || ''
+    }));
+    renderInventory(inventoryData);
+    updateMetrics();
+  }
+}
+
+function exportInventory() {
+  const header = 'SKU,Product,Category,Stock,Reorder At,Supplier,Status';
+  const rows = inventoryData.map(i => `${i.sku},"${i.name}",${i.category},${i.stock},${i.threshold},${i.supplier},${getStatus(i).toUpperCase()}`);
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'restox-inventory.csv';
+  a.click();
+  showToast('Inventory exported as CSV', 'success');
+}
+
+// ─── SUPPLIERS ────────────────────────────────────────────────────────
+let supplierData = [
+  { id: 'sup-1', name: 'BeautySource Co.', category: 'Skincare', location: 'South Africa', lead: '5–7 days', reliability: 98, products: 42 },
+  { id: 'sup-2', name: 'DermLab SA', category: 'Active Ingredients', location: 'Cape Town', lead: '3–5 days', reliability: 95, products: 31 },
+  { id: 'sup-3', name: 'SkinShield Ltd.', category: 'Sun Care', location: 'Johannesburg', lead: '7–10 days', reliability: 81, products: 18 },
+  { id: 'sup-4', name: 'NatureBotanica', category: 'Natural Oils', location: 'Botswana', lead: '2–3 days', reliability: 100, products: 14 },
+];
+
+function renderSuppliers(data) {
+  const container = document.getElementById('supplier-cards');
+  container.innerHTML = data.map(s => {
+    const relColor = s.reliability >= 90 ? 'var(--green)' : s.reliability >= 80 ? 'var(--amber)' : 'var(--red)';
+    return `<div class="supplier-card" data-id="${s.id}">
+      <div class="supplier-name">${s.name}</div>
+      <div class="supplier-cat">${s.category} · ${s.location}</div>
+      <div style="margin-bottom:0.75rem"><span class="badge active">ACTIVE</span></div>
+      <div class="supplier-stat"><span class="supplier-stat-label">Products</span><span class="supplier-stat-val">${s.products}</span></div>
+      <div class="supplier-stat"><span class="supplier-stat-label">Lead Time</span><span class="supplier-stat-val">${s.lead}</span></div>
+      <div class="supplier-stat"><span class="supplier-stat-label">Reliability</span><span class="supplier-stat-val" style="color:${relColor}">${s.reliability}%</span></div>
+    </div>`;
+  }).join('');
+  document.getElementById('supplier-count').textContent = data.length + ' active suppliers';
+}
+
+async function addSupplier() {
+  const name = document.getElementById('sup-name').value.trim();
+  const cat = document.getElementById('sup-cat').value.trim();
+  const loc = document.getElementById('sup-location').value.trim();
+  const lead = document.getElementById('sup-lead').value.trim();
+  const rel = parseInt(document.getElementById('sup-reliability').value) || 95;
+
+  if (!name) { showToast('Supplier name required', 'error'); return; }
+
+  const supplier = { id: 'sup-' + Date.now(), name, category: cat, location: loc, lead: lead || '—', reliability: rel, products: 0 };
+
+  if (supabase && currentUser?.id) {
+    const { error } = await supabase.from('suppliers').insert([{
+      name, category: cat, location: loc, lead_time: lead, reliability: rel, user_id: currentUser.id
+    }]);
+    if (error) { showToast('DB error: ' + error.message, 'error'); return; }
+  }
+
+  supplierData.push(supplier);
+  renderSuppliers(supplierData);
+  updateMetrics();
+  closeModal('modal-add-supplier');
+  showToast(name + ' added', 'success');
+
+  ['sup-name','sup-cat','sup-location','sup-lead','sup-reliability'].forEach(id => document.getElementById(id).value = '');
+}
+
+async function loadSuppliersFromDB() {
+  if (!supabase || !currentUser?.id) return;
+  const { data, error } = await supabase.from('suppliers').select('*').eq('user_id', currentUser.id);
+  if (error) return;
+  if (data && data.length > 0) {
+    supplierData = data.map(r => ({
+      id: r.id, name: r.name, category: r.category || '', location: r.location || '',
+      lead: r.lead_time || '—', reliability: r.reliability || 95, products: r.product_count || 0
+    }));
+    renderSuppliers(supplierData);
+    updateMetrics();
+  }
+}
+
+// ─── METRICS ─────────────────────────────────────────────────────────
+function updateMetrics() {
+  const low = inventoryData.filter(i => getStatus(i) === 'low').length;
+  const out = inventoryData.filter(i => getStatus(i) === 'out').length;
+  document.getElementById('metric-skus').textContent = inventoryData.length;
+  document.getElementById('metric-low').textContent = low;
+  document.getElementById('metric-out').textContent = out;
+  document.getElementById('metric-suppliers').textContent = supplierData.length;
+}
+
+function reorderItem(name) {
+  showToast('Reorder request sent for ' + name, 'success');
+}
+
+// ─── AI ───────────────────────────────────────────────────────────────
+const aiContext = `You are the Restox AI Advisor. Restox is an AI-powered inventory and supplier management platform for product-based businesses. The user's current inventory has items including low stock and out-of-stock products. Keep responses concise, practical, and focused on inventory insights, reorder recommendations, and supplier advice. Use plain text only.`;
+
+async function sendAiMsg() {
+  const input = document.getElementById('ai-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const msgs = document.getElementById('ai-messages');
+  const userDiv = document.createElement('div');
+  userDiv.className = 'msg user';
+  userDiv.textContent = text;
+  msgs.appendChild(userDiv);
+
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'msg ai';
+  typingDiv.textContent = 'Analyzing...';
+  msgs.appendChild(typingDiv);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  // Build inventory context
+  const invSummary = `Current inventory: ${inventoryData.length} products. Out of stock: ${inventoryData.filter(i=>getStatus(i)==='out').map(i=>i.name).join(', ') || 'none'}. Low stock: ${inventoryData.filter(i=>getStatus(i)==='low').map(i=>i.name).join(', ') || 'none'}. Suppliers: ${supplierData.map(s=>s.name).join(', ')}.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: aiContext + '\n\n' + invSummary,
+        messages: [{ role: 'user', content: text }]
+      })
+    });
+    const data = await res.json();
+    typingDiv.textContent = data.content?.[0]?.text || 'Unable to get a response.';
+  } catch(e) {
+    typingDiv.textContent = 'Connection error. Please try again.';
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function clearAiChat() {
+  document.getElementById('ai-messages').innerHTML = '<div class="msg ai">Chat cleared. How can I help with your inventory?</div>';
+}
+
+// ─── MODAL / TOAST ────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.classList.remove('show'); }, 3000);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  // Try to restore saved Supabase credentials
+  const savedUrl = localStorage.getItem('rx_sb_url');
+  const savedKey = localStorage.getItem('rx_sb_key');
+  if (savedUrl && savedKey) {
+    initSupabase(savedUrl, savedKey);
+  }
+
+  // Render initial data
+  renderInventory(inventoryData);
+  renderSuppliers(supplierData);
+  updateMetrics();
+});
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('active');
+  });
+});
+</script>
+</body>
+</html>
