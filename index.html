@@ -975,6 +975,7 @@ function enterApp() {
   document.getElementById('landing').classList.remove('active');
   document.getElementById('app').classList.add('active');
   document.body.classList.add('in-app');
+  document.getElementById('landing-nav').style.display = 'none';
 
   const name = currentUser?.name || 'User';
   document.getElementById('user-name-display').textContent = name.split(' ')[0];
@@ -1004,6 +1005,7 @@ function logout() {
   document.getElementById('app').classList.remove('active');
   document.getElementById('landing').classList.add('active');
   document.body.classList.remove('in-app');
+  document.getElementById('landing-nav').style.display = 'flex';
   showSection('dashboard', document.querySelector('.nav-item'));
 }
 
