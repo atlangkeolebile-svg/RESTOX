@@ -672,16 +672,16 @@
             <ul class="price-features">
               <li>Up to 100 SKUs</li><li>3 suppliers</li><li>Basic AI</li><li>1 user</li>
             </ul>
-            <button class="btn-plan outline">Downgrade</button>
+            <button class="btn-plan outline" onclick="startCheckout('starter')">Get Starter</button>
           </div>
           <div class="price-card featured">
-            <div class="price-badge">CURRENT</div>
+            <div class="price-badge">POPULAR</div>
             <div class="price-tier">Growth</div>
             <div class="price-amount">$49<span>/mo</span></div>
             <ul class="price-features">
               <li>Unlimited SKUs</li><li>Unlimited suppliers</li><li>Full AI advisor</li><li>5 users</li>
             </ul>
-            <button class="btn-plan fill" disabled style="opacity:0.4;cursor:default">Active Plan</button>
+            <button class="btn-plan fill" onclick="startCheckout('growth')">Get Growth</button>
           </div>
           <div class="price-card">
             <div class="price-tier">Enterprise</div>
@@ -689,7 +689,7 @@
             <ul class="price-features">
               <li>Everything in Growth</li><li>Multi-location</li><li>API access</li><li>Priority support</li>
             </ul>
-            <button class="btn-plan outline" onclick="showToast('Stripe integration coming next session','')">Upgrade</button>
+            <button class="btn-plan outline" onclick="startCheckout('enterprise')">Get Enterprise</button>
           </div>
         </div>
       </div>
@@ -1258,6 +1258,40 @@ function showToast(msg, type) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { t.classList.remove('show'); }, 3000);
 }
+
+// ─── STRIPE ───────────────────────────────────────────────────────────
+async function startCheckout(plan) {
+  showToast('Redirecting to checkout...', '');
+  try {
+    const res = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan, email: currentUser?.email || '' })
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      showToast('Checkout error: ' + (data.error || 'Unknown'), 'error');
+    }
+  } catch(e) {
+    showToast('Failed to start checkout', 'error');
+  }
+}
+
+// Handle Stripe return
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('success')) {
+    const plan = params.get('plan') || 'plan';
+    setTimeout(() => showToast('Payment successful! Welcome to Restox ' + plan.charAt(0).toUpperCase() + plan.slice(1) + '.', 'success'), 800);
+    window.history.replaceState({}, '', '/');
+  }
+  if (params.get('canceled')) {
+    setTimeout(() => showToast('Checkout canceled.', ''), 800);
+    window.history.replaceState({}, '', '/');
+  }
+})();
 
 // ─── INIT ─────────────────────────────────────────────────────────────
 window.addEventListener('load', () => {
